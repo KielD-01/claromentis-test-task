@@ -1,0 +1,36 @@
+version: '3.3'
+
+networks:
+  claromentis-test:
+    driver: bridge
+
+services:
+  claromentis-php:
+    image: devilbox/php-fpm:7.4-work
+    container_name: claromentis-php
+    build:
+      context: .
+      dockerfile: ./docker/php.Dockerfile
+    networks:
+      - claromentis-test
+    volumes:
+      - ./application:/var/www/application
+      - ./application/configs/supervisor:/etc/supervisor/conf.d/
+
+  claromentis-nginx:
+    image: nginx:latest
+    container_name: claromentis-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./application:/var/www/application
+      - ./application/configs/nginx:/etc/nginx/conf.d
+    build:
+      context: .
+      dockerfile: ./docker/nginx.Dockerfile
+      args:
+        HOSTNAME: ${HOSTNAME:-claromentis.loc}
+    depends_on:
+      - claromentis-php
+    networks:
+      - claromentis-test
